@@ -96,10 +96,11 @@ async function iniciarSesion() {
         const btn = document.getElementById("btn-login");
         btn.disabled = true;
         btn.textContent = "Iniciando sesión...";
+        document.getElementById("mensaje-inicial").textContent = "Redirigiendo a Microsoft para iniciar sesión...";
+        await new Promise(resolve => setTimeout(resolve, 800));
         await msalInstance.loginRedirect(loginRequest);
     } catch (err) {
         console.error("Error al iniciar sesión:", err);
-        const btn = document.getElementById("btn-login");
         btn.disabled = false;
         btn.textContent = "Iniciar sesión con Microsoft";
         alert("No se pudo iniciar sesión.");
