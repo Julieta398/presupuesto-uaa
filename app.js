@@ -93,9 +93,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 // =============================================
 async function iniciarSesion() {
     try {
+        const btn = document.getElementById("btn-login");
+        btn.disabled = true;
+        btn.textContent = "Iniciando sesión...";
         await msalInstance.loginRedirect(loginRequest);
     } catch (err) {
         console.error("Error al iniciar sesión:", err);
+        const btn = document.getElementById("btn-login");
+        btn.disabled = false;
+        btn.textContent = "Iniciar sesión con Microsoft";
         alert("No se pudo iniciar sesión.");
     }
 }
