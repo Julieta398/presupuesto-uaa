@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presupuesto UAA</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
+</head>
+<body>
+
+    <div id="encabezado">
+    <div id="encabezado-logo">
+        <img src="/logo.png" alt="UAA" style="height: 52px;">
+    </div>
+    <div id="encabezado-info">
+        <div class="titulo-bloque">
+            <h1>Presupuesto — Proyección de Gastos</h1>
+            <div class="subtitulo">Unión Agrícola de Avellaneda · Cooperativa Limitada</div>
+        </div>
+        <div id="info-usuario" style="display:none;">
+            Sesión: <strong><span id="usuario"></span></strong>
+        </div>
+        <button id="btn-login">Iniciar sesión con Microsoft</button>
+    </div>
+</div>
+
+    <div id="panel-filtros">
+        <div class="filtro-grupo">
+            <label>Gerencia</label>
+            <select id="filtro-gerencia"><option value="">-- Todos --</option></select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Sección</label>
+            <select id="filtro-seccion" disabled><option value="">-- Todos --</option></select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Sucursal</label>
+            <select id="filtro-sucursal" disabled><option value="">-- Todos --</option></select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Mes</label>
+            <select id="filtro-mes" disabled><option value="">-- Todos --</option></select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Cuenta</label>
+            <select id="filtro-cuenta" disabled><option value="">-- Todos --</option></select>
+        </div>
+        <div class="filtro-botones">
+            <button id="btn-filtrar">Filtrar</button>
+            <button id="btn-limpiar">Limpiar</button>
+            <button id="btn-guardar">Guardar cambios</button>
+        </div>
+    </div>
+
+    <div id="contenido">
+        <p id="mensaje-inicial">Iniciá sesión para cargar los datos.</p>
+
+        <table id="tabla-datos" style="display:none;">
+            <thead>
+                <tr>
+                    <th>Gerencia</th>
+                    <th>Sección</th>
+                    <th>Sucursal</th>
+                    <th>Mes</th>
+                    <th>Cuenta</th>
+                    <th>Descripción</th>
+                    <th>% Prom Vtas</th>
+                    <th>Proyección</th>
+                    <th>Nuevo % Vtas</th>
+                    <th>Nuevo USD</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-body"></tbody>
+        </table>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

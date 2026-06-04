@@ -1,0 +1,259 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    background: #f0f2f5;
+    color: #222;
+}
+
+#encabezado {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 4px solid #ed3237;
+}
+
+#encabezado-logo {
+    background: white;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    border-right: 4px solid #ed3237;
+}
+
+#encabezado-info {
+    background: #0f62ac;
+    color: white;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+}
+
+#encabezado h1 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.subtitulo {
+    font-size: 11px;
+    opacity: 0.75;
+}
+
+.titulo-bloque {
+    flex: 1;
+}
+
+
+.titulo-bloque {
+    flex: 1;
+}
+
+#encabezado h1 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.subtitulo {
+    font-size: 11px;
+    opacity: 0.75;
+}
+
+#info-usuario {
+    font-size: 11px;
+    opacity: 0.85;
+    text-align: right;
+}
+
+#btn-login {
+    background: white;
+    color: #0f62ac;
+    border: none;
+    padding: 7px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+#btn-login:hover {
+    background: #e8f0fb;
+}
+
+#panel-filtros {
+    background: white;
+    padding: 14px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    border-bottom: 1px solid #ddd;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+}
+
+.filtro-grupo label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filtro-grupo select {
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 12px;
+    background: white;
+    color: #222;
+}
+
+.filtro-grupo select:focus {
+    outline: none;
+    border-color: #0f62ac;
+}
+
+.filtro-grupo select:disabled {
+    background: #f5f5f5;
+    color: #aaa;
+}
+
+.filtro-botones {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding-bottom: 1px;
+}
+
+#btn-filtrar {
+    background: #0f62ac;
+    color: white;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#btn-filtrar:hover {
+    background: #0a4d8a;
+}
+
+#btn-limpiar {
+    background: #f0f2f5;
+    color: #555;
+    border: 1px solid #ccc;
+    padding: 7px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#btn-limpiar:hover {
+    background: #e0e2e5;
+}
+
+#btn-guardar {
+    background: #ed3237;
+    color: white;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#btn-guardar:hover {
+    background: #c5282c;
+}
+
+#btn-guardar:disabled {
+    background: #f0a0a2;
+    cursor: not-allowed;
+}
+
+#contenido {
+    padding: 20px 24px 40px;
+    overflow-x: auto;
+}
+
+#mensaje-inicial {
+    color: #aaa;
+    text-align: center;
+    margin-top: 60px;
+    font-size: 13px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+thead tr {
+    background: #0f62ac;
+}
+
+thead th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: white;
+    white-space: nowrap;
+}
+
+thead th:first-child {
+    border-left: 4px solid #ed3237;
+}
+
+tbody tr:nth-child(even) {
+    background: #f7f9fc;
+}
+
+tbody tr:hover {
+    background: #e8f0fb;
+}
+
+tbody td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+input[type="text"] {
+    width: 100px;
+    padding: 4px 7px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: #0f62ac;
+}
