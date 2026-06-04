@@ -52,7 +52,7 @@ const msalConfig = {
     auth: {
         clientId: CONFIG.clientId,
         authority: `https://login.microsoftonline.com/${CONFIG.tenantId}`,
-        redirectUri: window.location.origin
+        redirectUri: "https://julieta398.github.io/presupuesto-uaa"
     }
 };
 
