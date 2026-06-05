@@ -150,7 +150,9 @@ async function cargarDatosDesdeGraph() {
             return filaCopia;
         });
 
-        inicializarFiltros();
+        if (datosBrutos.length === 0 || document.getElementById("filtro-gerencia").options.length <= 1) {
+            inicializarFiltros();
+        }
         document.getElementById("mensaje-inicial").textContent =
             "Aplicá los filtros y hacé clic en Filtrar para ver los datos.";
 
@@ -311,7 +313,13 @@ function resetearSelect(idSelect) {
 // =============================================
 // APLICAR / LIMPIAR FILTROS
 // =============================================
-function aplicarFiltros() {
+async function aplicarFiltros() {
+    const btnFiltrar = document.getElementById("btn-filtrar");
+    btnFiltrar.disabled = true;
+    btnFiltrar.textContent = "Cargando...";
+
+    await cargarDatosDesdeGraph();
+
     const gerencia = document.getElementById("filtro-gerencia").value;
     const seccion = document.getElementById("filtro-seccion").value;
     const sucursal = document.getElementById("filtro-sucursal").value;
@@ -333,6 +341,9 @@ function aplicarFiltros() {
             (cuentageneral === "" || fila[COLUMNAS.CUENTA_GENERAL] === cuentageneral)
         );
     });
+
+    btnFiltrar.disabled = false;
+    btnFiltrar.textContent = "Filtrar";
 
     renderizarTabla();
 }
@@ -384,6 +395,8 @@ function renderizarTabla() {
             <td>${formatearUSD(fila[COLUMNAS.PROYECCION])}</td>
             <td><input type="text" class="input-pvtas" data-index="${index}" placeholder="ej: -0,8"></td>
             <td><input type="text" class="input-usd" data-index="${index}" placeholder="ej: 3000,25"></td>
+            <td>${formatearPorcentaje(fila[COLUMNAS.PROM_PVTAS_RESULT])}</td>
+            <td>${formatearUSD(fila[COLUMNAS.PROYECCION_RESULT])}</td>
         `;
         tbody.appendChild(tr);
     });
