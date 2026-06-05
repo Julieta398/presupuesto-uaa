@@ -81,7 +81,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("filtro-subgrupo").addEventListener("change", () => actualizarCascada("subgrupo"));
     document.getElementById("filtro-cuenta").addEventListener("change", () => actualizarCascada("cuenta"));
 
-    document.getElementById("btn-actualizar").addEventListener("click", actualizarResultados);
 
     const cuentas = msalInstance.getAllAccounts();
     if (cuentas.length > 0) {
@@ -209,6 +208,9 @@ async function guardarCambios() {
             });
         }
 
+        btnGuardar.textContent = "Actualizando resultados...";
+        await cargarDatosDesdeGraph();
+        aplicarFiltros();
         btnGuardar.disabled = false;
         btnGuardar.textContent = "Guardar cambios";
         alert(`${cambios.length} cambio(s) guardado(s) en Excel correctamente.`);
@@ -418,18 +420,4 @@ function parsearNumero(texto) {
     const num = parseFloat(texto);
     if (isNaN(num)) return null;
     return num;
-}
-
-async function actualizarResultados() {
-    const btn = document.getElementById("btn-actualizar");
-    btn.disabled = true;
-    btn.textContent = "Actualizando...";
-
-    await cargarDatosDesdeGraph();
-
-    // Re-aplicar filtros con datos frescos
-    aplicarFiltros();
-
-    btn.disabled = false;
-    btn.textContent = "Actualizar resultados";
 }
