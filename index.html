@@ -10,20 +10,20 @@
 <body>
 
     <div id="encabezado">
-    <div id="encabezado-logo">
-        <img src="logo.png" alt="UAA" style="height: 52px;">
-    </div>
-    <div id="encabezado-info">
-        <div class="titulo-bloque">
-            <h1>Presupuesto — Proyección de Gastos</h1>
-            <div class="subtitulo">Unión Agrícola de Avellaneda · Cooperativa Limitada</div>
+        <div id="encabezado-logo">
+            <img src="logo.png" alt="UAA" style="height: 52px;">
         </div>
-        <div id="info-usuario" style="display:none;">
-            Sesión: <strong><span id="usuario"></span></strong>
+        <div id="encabezado-info">
+            <div class="titulo-bloque">
+                <h1>Presupuesto — Proyección de Gastos</h1>
+                <div class="subtitulo">Unión Agrícola de Avellaneda · Cooperativa Limitada</div>
+            </div>
+            <div id="info-usuario" style="display:none;">
+                Sesión: <strong><span id="usuario"></span></strong>
+            </div>
+            <button id="btn-login">Iniciar sesión con Microsoft</button>
         </div>
-        <button id="btn-login">Iniciar sesión con Microsoft</button>
     </div>
-</div>
 
     <div id="panel-filtros">
         <div class="filtro-grupo">
@@ -43,8 +43,20 @@
             <select id="filtro-mes" disabled><option value="">-- Todos --</option></select>
         </div>
         <div class="filtro-grupo">
+            <label>Grupo</label>
+            <select id="filtro-grupo" disabled><option value="">-- Todos --</option></select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Subgrupo</label>
+            <select id="filtro-subgrupo" disabled><option value="">-- Todos --</option></select>
+        </div>
+        <div class="filtro-grupo">
             <label>Cuenta</label>
             <select id="filtro-cuenta" disabled><option value="">-- Todos --</option></select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Cuenta general</label>
+            <select id="filtro-cuentageneral" disabled><option value="">-- Todos --</option></select>
         </div>
         <div class="filtro-botones">
             <button id="btn-filtrar">Filtrar</button>
@@ -63,8 +75,10 @@
                     <th>Sección</th>
                     <th>Sucursal</th>
                     <th>Mes</th>
+                    <th>Grupo</th>
+                    <th>Subgrupo</th>
                     <th>Cuenta</th>
-                    <th>Descripción</th>
+                    <th>Cuenta general</th>
                     <th>% Prom Vtas</th>
                     <th>Proyección</th>
                     <th>Nuevo % Vtas</th>

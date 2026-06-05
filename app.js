@@ -13,10 +13,10 @@ const COLUMNAS = {
     GERENCIA: 0,
     SECCION: 1,
     SUCURSAL: 2,
-    TIPO: 3,
-    CATEGORIA: 4,
+    GRUPO: 3,
+    SUBGRUPO: 4,
     MES: 5,
-    CUENTA_DESC: 6,
+    CUENTA: 6,
     CUENTA_CONTABLE: 7,
     CUENTA_GENERAL: 8,
     DESCRIPCION: 9,
@@ -66,8 +66,6 @@ const loginRequest = {
 document.addEventListener("DOMContentLoaded", async () => {
     msalInstance = new msal.PublicClientApplication(msalConfig);
     await msalInstance.initialize();
-
-    // Manejar redirect de vuelta
     await msalInstance.handleRedirectPromise();
 
     document.getElementById("btn-login").addEventListener("click", iniciarSesion);
@@ -79,8 +77,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("filtro-seccion").addEventListener("change", () => actualizarCascada("seccion"));
     document.getElementById("filtro-sucursal").addEventListener("change", () => actualizarCascada("sucursal"));
     document.getElementById("filtro-mes").addEventListener("change", () => actualizarCascada("mes"));
+    document.getElementById("filtro-grupo").addEventListener("change", () => actualizarCascada("grupo"));
+    document.getElementById("filtro-subgrupo").addEventListener("change", () => actualizarCascada("subgrupo"));
+    document.getElementById("filtro-cuenta").addEventListener("change", () => actualizarCascada("cuenta"));
 
-    // Si ya hay sesion activa, cargar datos directamente
     const cuentas = msalInstance.getAllAccounts();
     if (cuentas.length > 0) {
         await obtenerToken();
@@ -101,6 +101,7 @@ async function iniciarSesion() {
         await msalInstance.loginRedirect(loginRequest);
     } catch (err) {
         console.error("Error al iniciar sesión:", err);
+        const btn = document.getElementById("btn-login");
         btn.disabled = false;
         btn.textContent = "Iniciar sesión con Microsoft";
         alert("No se pudo iniciar sesión.");
@@ -143,10 +144,9 @@ async function cargarDatosDesdeGraph() {
         const data = await response.json();
         const filas = data.values;
 
-        // La primera fila son headers, empezamos desde la 2
         datosBrutos = filas.slice(1).map((fila, index) => {
             const filaCopia = [...fila];
-            filaCopia[COLUMNAS.FILA_EXCEL] = index + 2; // fila real en Excel (base 1, +1 por header)
+            filaCopia[COLUMNAS.FILA_EXCEL] = index + 2;
             return filaCopia;
         });
 
@@ -175,7 +175,7 @@ async function guardarCambios() {
 
             cambios.push({
                 filaExcel: fila[COLUMNAS.FILA_EXCEL],
-                columna: esPvtas ? 20 : 21, // U=20, V=21 (base 0 en Graph)
+                columna: esPvtas ? 20 : 21,
                 valor: parsearNumero(input.value)
             });
         }
@@ -217,7 +217,6 @@ async function guardarCambios() {
     }
 }
 
-// Convierte columna (base 0) y fila (base 1) a notacion A1
 function columnToA1(colIndex, rowIndex) {
     let col = "";
     let n = colIndex + 1;
@@ -233,7 +232,7 @@ function columnToA1(colIndex, rowIndex) {
 // =============================================
 function inicializarFiltros() {
     poblarSelect("filtro-gerencia", COLUMNAS.GERENCIA, datosBrutos);
-    ["filtro-seccion", "filtro-sucursal", "filtro-mes", "filtro-cuenta"].forEach(id => {
+    ["filtro-seccion", "filtro-sucursal", "filtro-mes", "filtro-grupo", "filtro-subgrupo", "filtro-cuenta", "filtro-cuentageneral"].forEach(id => {
         document.getElementById(id).disabled = true;
     });
 }
@@ -246,76 +245,38 @@ function actualizarCascada(nivel) {
     const seccion = document.getElementById("filtro-seccion").value;
     const sucursal = document.getElementById("filtro-sucursal").value;
     const mes = document.getElementById("filtro-mes").value;
+    const grupo = document.getElementById("filtro-grupo").value;
+    const subgrupo = document.getElementById("filtro-subgrupo").value;
+    const cuenta = document.getElementById("filtro-cuenta").value;
 
-    let datosFiltro = datosBrutos;
+    const filtrarDatos = (data) => data.filter(f =>
+        (gerencia === "" || f[COLUMNAS.GERENCIA] === gerencia) &&
+        (seccion === "" || f[COLUMNAS.SECCION] === seccion) &&
+        (sucursal === "" || f[COLUMNAS.SUCURSAL] === sucursal) &&
+        (mes === "" || f[COLUMNAS.MES] === mes) &&
+        (grupo === "" || f[COLUMNAS.GRUPO] === grupo) &&
+        (subgrupo === "" || f[COLUMNAS.SUBGRUPO] === subgrupo) &&
+        (cuenta === "" || f[COLUMNAS.CUENTA] === cuenta)
+    );
 
-    if (nivel === "gerencia") {
-        resetearSelect("filtro-seccion");
-        resetearSelect("filtro-sucursal");
-        resetearSelect("filtro-mes");
-        resetearSelect("filtro-cuenta");
+    const todosLosFiltros = ["filtro-seccion", "filtro-sucursal", "filtro-mes", "filtro-grupo", "filtro-subgrupo", "filtro-cuenta", "filtro-cuentageneral"];
 
-        if (gerencia !== "") {
-            datosFiltro = datosBrutos.filter(f => f[COLUMNAS.GERENCIA] === gerencia);
-            poblarSelect("filtro-seccion", COLUMNAS.SECCION, datosFiltro);
-            poblarSelect("filtro-sucursal", COLUMNAS.SUCURSAL, datosFiltro);
-            poblarSelect("filtro-mes", COLUMNAS.MES, datosFiltro);
-            poblarSelect("filtro-cuenta", COLUMNAS.CUENTA_GENERAL, datosFiltro);
-            ["filtro-seccion", "filtro-sucursal", "filtro-mes", "filtro-cuenta"].forEach(id => {
-                document.getElementById(id).disabled = false;
-            });
-        } else {
-            ["filtro-seccion", "filtro-sucursal", "filtro-mes", "filtro-cuenta"].forEach(id => {
-                document.getElementById(id).disabled = true;
-            });
-        }
-    }
+    const orden = ["gerencia", "seccion", "sucursal", "mes", "grupo", "subgrupo", "cuenta", "cuentageneral"];
+    const posicion = orden.indexOf(nivel);
 
-    if (nivel === "seccion") {
-        resetearSelect("filtro-sucursal");
-        resetearSelect("filtro-mes");
-        resetearSelect("filtro-cuenta");
+    // Resetear filtros posteriores
+    orden.slice(posicion + 1).forEach(n => resetearSelect(`filtro-${n}`));
 
-        datosFiltro = datosBrutos.filter(f =>
-            (gerencia === "" || f[COLUMNAS.GERENCIA] === gerencia) &&
-            (seccion === "" || f[COLUMNAS.SECCION] === seccion)
-        );
-        poblarSelect("filtro-sucursal", COLUMNAS.SUCURSAL, datosFiltro);
-        poblarSelect("filtro-mes", COLUMNAS.MES, datosFiltro);
-        poblarSelect("filtro-cuenta", COLUMNAS.CUENTA_GENERAL, datosFiltro);
-        ["filtro-sucursal", "filtro-mes", "filtro-cuenta"].forEach(id => {
-            document.getElementById(id).disabled = false;
-        });
-    }
+    // Poblar y habilitar filtros posteriores
+    const datosFiltro = filtrarDatos(datosBrutos);
 
-    if (nivel === "sucursal") {
-        resetearSelect("filtro-mes");
-        resetearSelect("filtro-cuenta");
-
-        datosFiltro = datosBrutos.filter(f =>
-            (gerencia === "" || f[COLUMNAS.GERENCIA] === gerencia) &&
-            (seccion === "" || f[COLUMNAS.SECCION] === seccion) &&
-            (sucursal === "" || f[COLUMNAS.SUCURSAL] === sucursal)
-        );
-        poblarSelect("filtro-mes", COLUMNAS.MES, datosFiltro);
-        poblarSelect("filtro-cuenta", COLUMNAS.CUENTA_GENERAL, datosFiltro);
-        ["filtro-mes", "filtro-cuenta"].forEach(id => {
-            document.getElementById(id).disabled = false;
-        });
-    }
-
-    if (nivel === "mes") {
-        resetearSelect("filtro-cuenta");
-
-        datosFiltro = datosBrutos.filter(f =>
-            (gerencia === "" || f[COLUMNAS.GERENCIA] === gerencia) &&
-            (seccion === "" || f[COLUMNAS.SECCION] === seccion) &&
-            (sucursal === "" || f[COLUMNAS.SUCURSAL] === sucursal) &&
-            (mes === "" || f[COLUMNAS.MES] === mes)
-        );
-        poblarSelect("filtro-cuenta", COLUMNAS.CUENTA_GENERAL, datosFiltro);
-        document.getElementById("filtro-cuenta").disabled = false;
-    }
+    if (posicion <= 0) { poblarSelect("filtro-seccion", COLUMNAS.SECCION, datosFiltro); document.getElementById("filtro-seccion").disabled = false; }
+    if (posicion <= 1) { poblarSelect("filtro-sucursal", COLUMNAS.SUCURSAL, datosFiltro); document.getElementById("filtro-sucursal").disabled = false; }
+    if (posicion <= 2) { poblarSelect("filtro-mes", COLUMNAS.MES, datosFiltro); document.getElementById("filtro-mes").disabled = false; }
+    if (posicion <= 3) { poblarSelect("filtro-grupo", COLUMNAS.GRUPO, datosFiltro); document.getElementById("filtro-grupo").disabled = false; }
+    if (posicion <= 4) { poblarSelect("filtro-subgrupo", COLUMNAS.SUBGRUPO, datosFiltro); document.getElementById("filtro-subgrupo").disabled = false; }
+    if (posicion <= 5) { poblarSelect("filtro-cuenta", COLUMNAS.CUENTA, datosFiltro); document.getElementById("filtro-cuenta").disabled = false; }
+    if (posicion <= 6) { poblarSelect("filtro-cuentageneral", COLUMNAS.CUENTA_GENERAL, datosFiltro); document.getElementById("filtro-cuentageneral").disabled = false; }
 }
 
 // =============================================
@@ -355,7 +316,10 @@ function aplicarFiltros() {
     const seccion = document.getElementById("filtro-seccion").value;
     const sucursal = document.getElementById("filtro-sucursal").value;
     const mes = document.getElementById("filtro-mes").value;
+    const grupo = document.getElementById("filtro-grupo").value;
+    const subgrupo = document.getElementById("filtro-subgrupo").value;
     const cuenta = document.getElementById("filtro-cuenta").value;
+    const cuentageneral = document.getElementById("filtro-cuentageneral").value;
 
     datosFiltrados = datosBrutos.filter(fila => {
         return (
@@ -363,7 +327,10 @@ function aplicarFiltros() {
             (seccion === "" || fila[COLUMNAS.SECCION] === seccion) &&
             (sucursal === "" || fila[COLUMNAS.SUCURSAL] === sucursal) &&
             (mes === "" || fila[COLUMNAS.MES] === mes) &&
-            (cuenta === "" || fila[COLUMNAS.CUENTA_GENERAL] === cuenta)
+            (grupo === "" || fila[COLUMNAS.GRUPO] === grupo) &&
+            (subgrupo === "" || fila[COLUMNAS.SUBGRUPO] === subgrupo) &&
+            (cuenta === "" || fila[COLUMNAS.CUENTA] === cuenta) &&
+            (cuentageneral === "" || fila[COLUMNAS.CUENTA_GENERAL] === cuentageneral)
         );
     });
 
@@ -372,7 +339,7 @@ function aplicarFiltros() {
 
 function limpiarFiltros() {
     document.getElementById("filtro-gerencia").value = "";
-    ["filtro-seccion", "filtro-sucursal", "filtro-mes", "filtro-cuenta"].forEach(id => {
+    ["filtro-seccion", "filtro-sucursal", "filtro-mes", "filtro-grupo", "filtro-subgrupo", "filtro-cuenta", "filtro-cuentageneral"].forEach(id => {
         resetearSelect(id);
     });
     datosFiltrados = [];
@@ -409,11 +376,13 @@ function renderizarTabla() {
             <td>${fila[COLUMNAS.SECCION] || ""}</td>
             <td>${fila[COLUMNAS.SUCURSAL] || ""}</td>
             <td>${fila[COLUMNAS.MES] || ""}</td>
+            <td>${fila[COLUMNAS.GRUPO] || ""}</td>
+            <td>${fila[COLUMNAS.SUBGRUPO] || ""}</td>
+            <td>${fila[COLUMNAS.CUENTA] || ""}</td>
             <td>${fila[COLUMNAS.CUENTA_GENERAL] || ""}</td>
-            <td>${fila[COLUMNAS.DESCRIPCION] || ""}</td>
             <td>${formatearPorcentaje(fila[COLUMNAS.PROM_PVTAS])}</td>
             <td>${formatearUSD(fila[COLUMNAS.PROYECCION])}</td>
-            <td><input type="text" class="input-pvtas" data-index="${index}" placeholder="ej: -0,004"></td>
+            <td><input type="text" class="input-pvtas" data-index="${index}" placeholder="ej: -0,8"></td>
             <td><input type="text" class="input-usd" data-index="${index}" placeholder="ej: 3000,25"></td>
         `;
         tbody.appendChild(tr);
