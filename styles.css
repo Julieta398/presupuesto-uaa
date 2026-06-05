@@ -257,3 +257,23 @@ input[type="text"]:focus {
     outline: none;
     border-color: #0f62ac;
 }
+
+#btn-actualizar {
+    background: #0f62ac;
+    color: white;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#btn-actualizar:hover {
+    background: #0a4d8a;
+}
+
+#btn-actualizar:disabled {
+    background: #7aaed4;
+    cursor: not-allowed;
+}

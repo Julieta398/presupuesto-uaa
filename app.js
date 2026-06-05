@@ -81,6 +81,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("filtro-subgrupo").addEventListener("change", () => actualizarCascada("subgrupo"));
     document.getElementById("filtro-cuenta").addEventListener("change", () => actualizarCascada("cuenta"));
 
+    document.getElementById("btn-actualizar").addEventListener("click", actualizarResultados);
+
     const cuentas = msalInstance.getAllAccounts();
     if (cuentas.length > 0) {
         await obtenerToken();
@@ -313,13 +315,7 @@ function resetearSelect(idSelect) {
 // =============================================
 // APLICAR / LIMPIAR FILTROS
 // =============================================
-async function aplicarFiltros() {
-    const btnFiltrar = document.getElementById("btn-filtrar");
-    btnFiltrar.disabled = true;
-    btnFiltrar.textContent = "Cargando...";
-
-    await cargarDatosDesdeGraph();
-
+function aplicarFiltros() {
     const gerencia = document.getElementById("filtro-gerencia").value;
     const seccion = document.getElementById("filtro-seccion").value;
     const sucursal = document.getElementById("filtro-sucursal").value;
@@ -341,9 +337,6 @@ async function aplicarFiltros() {
             (cuentageneral === "" || fila[COLUMNAS.CUENTA_GENERAL] === cuentageneral)
         );
     });
-
-    btnFiltrar.disabled = false;
-    btnFiltrar.textContent = "Filtrar";
 
     renderizarTabla();
 }
@@ -425,4 +418,18 @@ function parsearNumero(texto) {
     const num = parseFloat(texto);
     if (isNaN(num)) return null;
     return num;
+}
+
+async function actualizarResultados() {
+    const btn = document.getElementById("btn-actualizar");
+    btn.disabled = true;
+    btn.textContent = "Actualizando...";
+
+    await cargarDatosDesdeGraph();
+
+    // Re-aplicar filtros con datos frescos
+    aplicarFiltros();
+
+    btn.disabled = false;
+    btn.textContent = "Actualizar resultados";
 }
