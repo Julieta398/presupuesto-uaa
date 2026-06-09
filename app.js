@@ -74,7 +74,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("btn-filtrar").addEventListener("click", aplicarFiltros);
     document.getElementById("btn-limpiar").addEventListener("click", limpiarFiltros);
     document.getElementById("btn-guardar").addEventListener("click", guardarCambios);
-    document.getElementById("switch-modo").addEventListener("change", toggleModo);
+    document.getElementById("btn-edicion").addEventListener("click", () => { if (modoResultados) toggleModo(); });
+    document.getElementById("btn-resultados").addEventListener("click", () => { if (!modoResultados) toggleModo(); });
 
     document.getElementById("filtro-gerencia").addEventListener("change", () => actualizarCascada("gerencia"));
     document.getElementById("filtro-seccion").addEventListener("change", () => actualizarCascada("seccion"));
@@ -177,31 +178,32 @@ async function cargarDatosDesdeGraph(paraResultados = false) {
 // TOGGLE MODO
 // =============================================
 async function toggleModo() {
-    const switchEl = document.getElementById("switch-modo");
-    const labelEdicion = document.getElementById("label-edicion");
-    const labelResultados = document.getElementById("label-resultados");
+    const btnEdicion = document.getElementById("btn-edicion");
+    const btnResultados = document.getElementById("btn-resultados");
 
-    if (switchEl.checked) {
-        // Cambiar a modo resultados
-        switchEl.disabled = true;
+    if (!modoResultados) {
+        btnEdicion.disabled = true;
+        btnResultados.disabled = true;
+        btnResultados.textContent = "Cargando...";
 
         await cargarDatosDesdeGraph(true);
 
         modoResultados = true;
-        labelEdicion.classList.remove("activo");
-        labelResultados.classList.add("activo-resultados");
+        btnEdicion.classList.remove("activo");
+        btnResultados.classList.add("activo-resultados");
+        btnResultados.textContent = "Resultados";
         document.getElementById("btn-guardar").style.display = "none";
         document.getElementById("th-nuevo-pvtas").style.display = "none";
         document.getElementById("th-nuevo-usd").style.display = "none";
         document.getElementById("th-result-pvtas").style.display = "";
         document.getElementById("th-result-usd").style.display = "";
 
-        switchEl.disabled = false;
+        btnEdicion.disabled = false;
+        btnResultados.disabled = false;
     } else {
-        // Volver a modo edición
         modoResultados = false;
-        labelResultados.classList.remove("activo-resultados");
-        labelEdicion.classList.add("activo");
+        btnResultados.classList.remove("activo-resultados");
+        btnEdicion.classList.add("activo");
         document.getElementById("btn-guardar").style.display = "";
         document.getElementById("th-nuevo-pvtas").style.display = "";
         document.getElementById("th-nuevo-usd").style.display = "";
