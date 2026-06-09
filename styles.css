@@ -267,3 +267,31 @@ input[type="text"]:focus {
     background: #7aaed4;
     cursor: not-allowed;
 }
+
+#btn-modo {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#btn-modo:hover {
+    background: #5a6268;
+}
+
+#btn-modo.modo-resultados {
+    background: #ed3237;
+}
+
+#btn-modo.modo-resultados:hover {
+    background: #c5282c;
+}
+
+#btn-modo:disabled {
+    background: #adb5bd;
+    cursor: not-allowed;
+}

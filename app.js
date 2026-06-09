@@ -41,9 +41,11 @@ const COLUMNAS = {
 // VARIABLES GLOBALES
 // =============================================
 let datosBrutos = [];
+let datosBrutosResultados = [];
 let datosFiltrados = [];
 let msalInstance = null;
 let accessToken = null;
+let modoResultados = false;
 
 // =============================================
 // MSAL - AUTENTICACION
@@ -72,6 +74,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("btn-filtrar").addEventListener("click", aplicarFiltros);
     document.getElementById("btn-limpiar").addEventListener("click", limpiarFiltros);
     document.getElementById("btn-guardar").addEventListener("click", guardarCambios);
+    document.getElementById("btn-modo").addEventListener("click", toggleModo);
 
     document.getElementById("filtro-gerencia").addEventListener("change", () => actualizarCascada("gerencia"));
     document.getElementById("filtro-seccion").addEventListener("change", () => actualizarCascada("seccion"));
@@ -80,7 +83,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("filtro-grupo").addEventListener("change", () => actualizarCascada("grupo"));
     document.getElementById("filtro-subgrupo").addEventListener("change", () => actualizarCascada("subgrupo"));
     document.getElementById("filtro-cuenta").addEventListener("change", () => actualizarCascada("cuenta"));
-
 
     const cuentas = msalInstance.getAllAccounts();
     if (cuentas.length > 0) {
@@ -130,8 +132,10 @@ async function obtenerToken() {
 // =============================================
 // LEER DATOS DESDE GRAPH API
 // =============================================
-async function cargarDatosDesdeGraph() {
-    document.getElementById("mensaje-inicial").textContent = "Cargando datos...";
+async function cargarDatosDesdeGraph(paraResultados = false) {
+    if (!paraResultados) {
+        document.getElementById("mensaje-inicial").textContent = "Cargando datos...";
+    }
 
     try {
         const url = `https://graph.microsoft.com/v1.0/drives/${CONFIG.driveId}/items/${CONFIG.fileId}/workbook/worksheets('${CONFIG.sheetName}')/usedRange`;
@@ -145,23 +149,70 @@ async function cargarDatosDesdeGraph() {
         const data = await response.json();
         const filas = data.values;
 
-        datosBrutos = filas.slice(1).map((fila, index) => {
+        const datos = filas.slice(1).map((fila, index) => {
             const filaCopia = [...fila];
             filaCopia[COLUMNAS.FILA_EXCEL] = index + 2;
             return filaCopia;
         });
 
-        if (datosBrutos.length === 0 || document.getElementById("filtro-gerencia").options.length <= 1) {
-            inicializarFiltros();
+        if (paraResultados) {
+            datosBrutosResultados = datos;
+        } else {
+            datosBrutos = datos;
+            if (datosBrutos.length === 0 || document.getElementById("filtro-gerencia").options.length <= 1) {
+                inicializarFiltros();
+            }
+            document.getElementById("mensaje-inicial").textContent =
+                "Aplicá los filtros y hacé clic en Filtrar para ver los datos.";
         }
-        document.getElementById("mensaje-inicial").textContent =
-            "Aplicá los filtros y hacé clic en Filtrar para ver los datos.";
 
     } catch (err) {
         console.error(err);
         document.getElementById("mensaje-inicial").textContent =
             "Error al cargar los datos: " + err.message;
     }
+}
+
+// =============================================
+// TOGGLE MODO
+// =============================================
+async function toggleModo() {
+    const btn = document.getElementById("btn-modo");
+
+    if (!modoResultados) {
+        // Cambiar a modo resultados
+        btn.disabled = true;
+        btn.textContent = "Cargando resultados...";
+
+        await cargarDatosDesdeGraph(true);
+
+        modoResultados = true;
+        btn.textContent = "Volver a edición";
+        btn.classList.add("modo-resultados");
+        document.getElementById("btn-guardar").style.display = "none";
+
+        // Actualizar headers
+        document.getElementById("th-nuevo-pvtas").style.display = "none";
+        document.getElementById("th-nuevo-usd").style.display = "none";
+        document.getElementById("th-result-pvtas").style.display = "";
+        document.getElementById("th-result-usd").style.display = "";
+
+        btn.disabled = false;
+    } else {
+        // Volver a modo edición
+        modoResultados = false;
+        btn.textContent = "Ver datos modificados";
+        btn.classList.remove("modo-resultados");
+        document.getElementById("btn-guardar").style.display = "";
+
+        // Actualizar headers
+        document.getElementById("th-nuevo-pvtas").style.display = "";
+        document.getElementById("th-nuevo-usd").style.display = "";
+        document.getElementById("th-result-pvtas").style.display = "none";
+        document.getElementById("th-result-usd").style.display = "none";
+    }
+
+    aplicarFiltros();
 }
 
 // =============================================
@@ -208,12 +259,9 @@ async function guardarCambios() {
             });
         }
 
-        btnGuardar.textContent = "Actualizando resultados...";
-        await cargarDatosDesdeGraph();
-        aplicarFiltros();
         btnGuardar.disabled = false;
         btnGuardar.textContent = "Guardar cambios";
-        alert(`${cambios.length} cambio(s) guardado(s) en Excel correctamente.`);
+        alert(`${cambios.length} cambio(s) guardado(s). Hacé clic en "Ver datos modificados" para ver el impacto en los resultados.`);
 
     } catch (err) {
         console.error(err);
@@ -255,6 +303,8 @@ function actualizarCascada(nivel) {
     const subgrupo = document.getElementById("filtro-subgrupo").value;
     const cuenta = document.getElementById("filtro-cuenta").value;
 
+    const datos = modoResultados ? datosBrutosResultados : datosBrutos;
+
     const filtrarDatos = (data) => data.filter(f =>
         (gerencia === "" || f[COLUMNAS.GERENCIA] === gerencia) &&
         (seccion === "" || f[COLUMNAS.SECCION] === seccion) &&
@@ -265,16 +315,12 @@ function actualizarCascada(nivel) {
         (cuenta === "" || f[COLUMNAS.CUENTA] === cuenta)
     );
 
-    const todosLosFiltros = ["filtro-seccion", "filtro-sucursal", "filtro-mes", "filtro-grupo", "filtro-subgrupo", "filtro-cuenta", "filtro-cuentageneral"];
-
     const orden = ["gerencia", "seccion", "sucursal", "mes", "grupo", "subgrupo", "cuenta", "cuentageneral"];
     const posicion = orden.indexOf(nivel);
 
-    // Resetear filtros posteriores
     orden.slice(posicion + 1).forEach(n => resetearSelect(`filtro-${n}`));
 
-    // Poblar y habilitar filtros posteriores
-    const datosFiltro = filtrarDatos(datosBrutos);
+    const datosFiltro = filtrarDatos(datos);
 
     if (posicion <= 0) { poblarSelect("filtro-seccion", COLUMNAS.SECCION, datosFiltro); document.getElementById("filtro-seccion").disabled = false; }
     if (posicion <= 1) { poblarSelect("filtro-sucursal", COLUMNAS.SUCURSAL, datosFiltro); document.getElementById("filtro-sucursal").disabled = false; }
@@ -327,7 +373,9 @@ function aplicarFiltros() {
     const cuenta = document.getElementById("filtro-cuenta").value;
     const cuentageneral = document.getElementById("filtro-cuentageneral").value;
 
-    datosFiltrados = datosBrutos.filter(fila => {
+    const datos = modoResultados ? datosBrutosResultados : datosBrutos;
+
+    datosFiltrados = datos.filter(fila => {
         return (
             (gerencia === "" || fila[COLUMNAS.GERENCIA] === gerencia) &&
             (seccion === "" || fila[COLUMNAS.SECCION] === seccion) &&
@@ -377,22 +425,39 @@ function renderizarTabla() {
 
     datosFiltrados.forEach((fila, index) => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${fila[COLUMNAS.GERENCIA] || ""}</td>
-            <td>${fila[COLUMNAS.SECCION] || ""}</td>
-            <td>${fila[COLUMNAS.SUCURSAL] || ""}</td>
-            <td>${fila[COLUMNAS.MES] || ""}</td>
-            <td>${fila[COLUMNAS.GRUPO] || ""}</td>
-            <td>${fila[COLUMNAS.SUBGRUPO] || ""}</td>
-            <td>${fila[COLUMNAS.CUENTA] || ""}</td>
-            <td>${fila[COLUMNAS.CUENTA_GENERAL] || ""}</td>
-            <td>${formatearPorcentaje(fila[COLUMNAS.PROM_PVTAS])}</td>
-            <td>${formatearUSD(fila[COLUMNAS.PROYECCION])}</td>
-            <td><input type="text" class="input-pvtas" data-index="${index}" placeholder="ej: -0,8"></td>
-            <td><input type="text" class="input-usd" data-index="${index}" placeholder="ej: 3000,25"></td>
-            <td>${formatearPorcentaje(fila[COLUMNAS.PROM_PVTAS_RESULT])}</td>
-            <td>${formatearUSD(fila[COLUMNAS.PROYECCION_RESULT])}</td>
-        `;
+
+        if (modoResultados) {
+            tr.innerHTML = `
+                <td>${fila[COLUMNAS.GERENCIA] || ""}</td>
+                <td>${fila[COLUMNAS.SECCION] || ""}</td>
+                <td>${fila[COLUMNAS.SUCURSAL] || ""}</td>
+                <td>${fila[COLUMNAS.MES] || ""}</td>
+                <td>${fila[COLUMNAS.GRUPO] || ""}</td>
+                <td>${fila[COLUMNAS.SUBGRUPO] || ""}</td>
+                <td>${fila[COLUMNAS.CUENTA] || ""}</td>
+                <td>${fila[COLUMNAS.CUENTA_GENERAL] || ""}</td>
+                <td>${formatearPorcentaje(fila[COLUMNAS.PROM_PVTAS])}</td>
+                <td>${formatearUSD(fila[COLUMNAS.PROYECCION])}</td>
+                <td>${formatearPorcentaje(fila[COLUMNAS.PROM_PVTAS_RESULT])}</td>
+                <td>${formatearUSD(fila[COLUMNAS.PROYECCION_RESULT])}</td>
+            `;
+        } else {
+            tr.innerHTML = `
+                <td>${fila[COLUMNAS.GERENCIA] || ""}</td>
+                <td>${fila[COLUMNAS.SECCION] || ""}</td>
+                <td>${fila[COLUMNAS.SUCURSAL] || ""}</td>
+                <td>${fila[COLUMNAS.MES] || ""}</td>
+                <td>${fila[COLUMNAS.GRUPO] || ""}</td>
+                <td>${fila[COLUMNAS.SUBGRUPO] || ""}</td>
+                <td>${fila[COLUMNAS.CUENTA] || ""}</td>
+                <td>${fila[COLUMNAS.CUENTA_GENERAL] || ""}</td>
+                <td>${formatearPorcentaje(fila[COLUMNAS.PROM_PVTAS])}</td>
+                <td>${formatearUSD(fila[COLUMNAS.PROYECCION])}</td>
+                <td><input type="text" class="input-pvtas" data-index="${index}" placeholder="ej: -0,8"></td>
+                <td><input type="text" class="input-usd" data-index="${index}" placeholder="ej: 3000,25"></td>
+            `;
+        }
+
         tbody.appendChild(tr);
     });
 }
