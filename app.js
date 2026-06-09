@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("btn-filtrar").addEventListener("click", aplicarFiltros);
     document.getElementById("btn-limpiar").addEventListener("click", limpiarFiltros);
     document.getElementById("btn-guardar").addEventListener("click", guardarCambios);
-    document.getElementById("btn-modo").addEventListener("click", toggleModo);
+    document.getElementById("switch-modo").addEventListener("change", toggleModo);
 
     document.getElementById("filtro-gerencia").addEventListener("change", () => actualizarCascada("gerencia"));
     document.getElementById("filtro-seccion").addEventListener("change", () => actualizarCascada("seccion"));
@@ -177,35 +177,32 @@ async function cargarDatosDesdeGraph(paraResultados = false) {
 // TOGGLE MODO
 // =============================================
 async function toggleModo() {
-    const btn = document.getElementById("btn-modo");
+    const switchEl = document.getElementById("switch-modo");
+    const labelEdicion = document.getElementById("label-edicion");
+    const labelResultados = document.getElementById("label-resultados");
 
-    if (!modoResultados) {
+    if (switchEl.checked) {
         // Cambiar a modo resultados
-        btn.disabled = true;
-        btn.textContent = "Cargando resultados...";
+        switchEl.disabled = true;
 
         await cargarDatosDesdeGraph(true);
 
         modoResultados = true;
-        btn.textContent = "Volver a edición";
-        btn.classList.add("modo-resultados");
+        labelEdicion.classList.remove("activo");
+        labelResultados.classList.add("activo-resultados");
         document.getElementById("btn-guardar").style.display = "none";
-
-        // Actualizar headers
         document.getElementById("th-nuevo-pvtas").style.display = "none";
         document.getElementById("th-nuevo-usd").style.display = "none";
         document.getElementById("th-result-pvtas").style.display = "";
         document.getElementById("th-result-usd").style.display = "";
 
-        btn.disabled = false;
+        switchEl.disabled = false;
     } else {
         // Volver a modo edición
         modoResultados = false;
-        btn.textContent = "Ver datos modificados";
-        btn.classList.remove("modo-resultados");
+        labelResultados.classList.remove("activo-resultados");
+        labelEdicion.classList.add("activo");
         document.getElementById("btn-guardar").style.display = "";
-
-        // Actualizar headers
         document.getElementById("th-nuevo-pvtas").style.display = "";
         document.getElementById("th-nuevo-usd").style.display = "";
         document.getElementById("th-result-pvtas").style.display = "none";
