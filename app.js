@@ -231,18 +231,20 @@ function registrarCambio(filaExcel, campo, valorTexto) {
     const valor = parsearNumero(valorTexto);
 
     if (!pendingChanges[filaExcel]) {
-        pendingChanges[filaExcel] = { U: null, V: null };
+        pendingChanges[filaExcel] = { U: null, V: null, textoU: "", textoV: "" };
     }
 
     // Si borra el input, elimina ese campo del pendiente
     if (valorTexto.trim() === "" || valor === null) {
         pendingChanges[filaExcel][campo] = null;
+        pendingChanges[filaExcel][campo === "U" ? "textoU" : "textoV"] = "";
         // Si ambos quedan null, elimina la entrada
         if (pendingChanges[filaExcel].U === null && pendingChanges[filaExcel].V === null) {
             delete pendingChanges[filaExcel];
         }
     } else {
         pendingChanges[filaExcel][campo] = valor;
+        pendingChanges[filaExcel][campo === "U" ? "textoU" : "textoV"] = valorTexto.trim();
     }
 
     actualizarBadgeGuardar();
@@ -250,7 +252,7 @@ function registrarCambio(filaExcel, campo, valorTexto) {
 
 function actualizarBadgeGuardar() {
     const btn = document.getElementById("btn-guardar");
-    const total = Object.keys(pendingChanges).length;
+    const total = Object.values(pendingChanges).reduce((acc, c) => acc + (c.U !== null ? 1 : 0) + (c.V !== null ? 1 : 0), 0);
     if (total === 0) {
         btn.textContent = "Guardar cambios";
         btn.disabled = false;
@@ -496,12 +498,8 @@ function renderizarTabla() {
         } else {
             // Recuperar valores pendientes para esta fila si existen
             const pendiente = pendingChanges[filaExcel] || {};
-            const valorU = pendiente.U !== null && pendiente.U !== undefined
-                ? (pendiente.U * 100).toLocaleString("es-AR", { maximumFractionDigits: 5 })
-                : "";
-            const valorV = pendiente.V !== null && pendiente.V !== undefined
-                ? pendiente.V.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                : "";
+            const valorU = pendiente.textoU || "";
+            const valorV = pendiente.textoV || "";
 
             tr.innerHTML = `
                 <td>${fila[COLUMNAS.GERENCIA] || ""}</td>
