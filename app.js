@@ -41,11 +41,14 @@ const COLUMNAS = {
 // VARIABLES GLOBALES
 // =============================================
 let datosBrutos = [];
-let datosBrutosResultados = [];
+let datosBrutosConsulta = [];
 let datosFiltrados = [];
 let msalInstance = null;
 let accessToken = null;
-let modoResultados = false;
+let modoConsulta = false;
+
+// pendingChanges: { [filaExcel]: { U: number|null, V: number|null } }
+let pendingChanges = {};
 
 // =============================================
 // MSAL - AUTENTICACION
@@ -74,8 +77,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("btn-filtrar").addEventListener("click", aplicarFiltros);
     document.getElementById("btn-limpiar").addEventListener("click", limpiarFiltros);
     document.getElementById("btn-guardar").addEventListener("click", guardarCambios);
-    document.getElementById("btn-edicion").addEventListener("click", () => { if (modoResultados) toggleModo(); });
-    document.getElementById("btn-resultados").addEventListener("click", () => { if (!modoResultados) toggleModo(); });
+    document.getElementById("btn-edicion").addEventListener("click", () => { if (modoConsulta) toggleModo(); });
+    document.getElementById("btn-consulta").addEventListener("click", () => { if (!modoConsulta) toggleModo(); });
 
     document.getElementById("filtro-gerencia").addEventListener("change", () => actualizarCascada("gerencia"));
     document.getElementById("filtro-seccion").addEventListener("change", () => actualizarCascada("seccion"));
@@ -84,6 +87,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("filtro-grupo").addEventListener("change", () => actualizarCascada("grupo"));
     document.getElementById("filtro-subgrupo").addEventListener("change", () => actualizarCascada("subgrupo"));
     document.getElementById("filtro-cuenta").addEventListener("change", () => actualizarCascada("cuenta"));
+
+    window.addEventListener("beforeunload", (e) => {
+        if (Object.keys(pendingChanges).length > 0) {
+            e.preventDefault();
+        }
+    });
 
     const cuentas = msalInstance.getAllAccounts();
     if (cuentas.length > 0) {
@@ -133,8 +142,8 @@ async function obtenerToken() {
 // =============================================
 // LEER DATOS DESDE GRAPH API
 // =============================================
-async function cargarDatosDesdeGraph(paraResultados = false) {
-    if (!paraResultados) {
+async function cargarDatosDesdeGraph(paraConsulta = false) {
+    if (!paraConsulta) {
         document.getElementById("mensaje-inicial").textContent = "Cargando datos...";
     }
 
@@ -156,8 +165,8 @@ async function cargarDatosDesdeGraph(paraResultados = false) {
             return filaCopia;
         });
 
-        if (paraResultados) {
-            datosBrutosResultados = datos;
+        if (paraConsulta) {
+            datosBrutosConsulta = datos;
         } else {
             datosBrutos = datos;
             if (datosBrutos.length === 0 || document.getElementById("filtro-gerencia").options.length <= 1) {
@@ -179,19 +188,19 @@ async function cargarDatosDesdeGraph(paraResultados = false) {
 // =============================================
 async function toggleModo() {
     const btnEdicion = document.getElementById("btn-edicion");
-    const btnResultados = document.getElementById("btn-resultados");
+    const btnConsulta = document.getElementById("btn-consulta");
 
-    if (!modoResultados) {
+    if (!modoConsulta) {
         btnEdicion.disabled = true;
-        btnResultados.disabled = true;
-        btnResultados.textContent = "Cargando...";
+        btnConsulta.disabled = true;
+        btnConsulta.textContent = "Cargando...";
 
         await cargarDatosDesdeGraph(true);
 
-        modoResultados = true;
+        modoConsulta = true;
         btnEdicion.classList.remove("activo");
-        btnResultados.classList.add("activo-resultados");
-        btnResultados.textContent = "Resultados";
+        btnConsulta.classList.add("activo-consulta");
+        btnConsulta.textContent = "Consulta";
         document.getElementById("btn-guardar").style.display = "none";
         document.getElementById("th-nuevo-pvtas").style.display = "none";
         document.getElementById("th-nuevo-usd").style.display = "none";
@@ -199,10 +208,10 @@ async function toggleModo() {
         document.getElementById("th-result-usd").style.display = "";
 
         btnEdicion.disabled = false;
-        btnResultados.disabled = false;
+        btnConsulta.disabled = false;
     } else {
-        modoResultados = false;
-        btnResultados.classList.remove("activo-resultados");
+        modoConsulta = false;
+        btnConsulta.classList.remove("activo-consulta");
         btnEdicion.classList.add("activo");
         document.getElementById("btn-guardar").style.display = "";
         document.getElementById("th-nuevo-pvtas").style.display = "";
@@ -215,26 +224,47 @@ async function toggleModo() {
 }
 
 // =============================================
+// PENDING CHANGES
+// =============================================
+function registrarCambio(filaExcel, campo, valorTexto) {
+    // campo: "U" o "V"
+    const valor = parsearNumero(valorTexto);
+
+    if (!pendingChanges[filaExcel]) {
+        pendingChanges[filaExcel] = { U: null, V: null };
+    }
+
+    // Si borra el input, elimina ese campo del pendiente
+    if (valorTexto.trim() === "" || valor === null) {
+        pendingChanges[filaExcel][campo] = null;
+        // Si ambos quedan null, elimina la entrada
+        if (pendingChanges[filaExcel].U === null && pendingChanges[filaExcel].V === null) {
+            delete pendingChanges[filaExcel];
+        }
+    } else {
+        pendingChanges[filaExcel][campo] = valor;
+    }
+
+    actualizarBadgeGuardar();
+}
+
+function actualizarBadgeGuardar() {
+    const btn = document.getElementById("btn-guardar");
+    const total = Object.keys(pendingChanges).length;
+    if (total === 0) {
+        btn.textContent = "Guardar cambios";
+        btn.disabled = false;
+    } else {
+        btn.textContent = `Guardar cambios (${total})`;
+        btn.disabled = false;
+    }
+}
+
+// =============================================
 // GUARDAR CAMBIOS VIA GRAPH API
 // =============================================
 async function guardarCambios() {
-    const cambios = [];
-
-    document.querySelectorAll(".input-pvtas, .input-usd").forEach(input => {
-        if (input.value !== "") {
-            const index = parseInt(input.dataset.index);
-            const fila = datosFiltrados[index];
-            const esPvtas = input.classList.contains("input-pvtas");
-
-            cambios.push({
-                filaExcel: fila[COLUMNAS.FILA_EXCEL],
-                columna: esPvtas ? 20 : 21,
-                valor: parsearNumero(input.value)
-            });
-        }
-    });
-
-    if (cambios.length === 0) {
+    if (Object.keys(pendingChanges).length === 0) {
         alert("No hay cambios para guardar.");
         return;
     }
@@ -244,28 +274,50 @@ async function guardarCambios() {
     btnGuardar.textContent = "Guardando...";
 
     try {
-        for (const cambio of cambios) {
-            const celda = columnToA1(cambio.columna, cambio.filaExcel);
-            const url = `https://graph.microsoft.com/v1.0/drives/${CONFIG.driveId}/items/${CONFIG.fileId}/workbook/worksheets('${CONFIG.sheetName}')/range(address='${celda}')`;
+        for (const [filaExcel, cambio] of Object.entries(pendingChanges)) {
+            const fila = parseInt(filaExcel);
 
-            await fetch(url, {
-                method: "PATCH",
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ values: [[cambio.columna === 20 ? cambio.valor / 100 : cambio.valor]] })
-            });
+            // Guardar U si tiene valor
+            if (cambio.U !== null) {
+                const celda = columnToA1(COLUMNAS.PROM_PVTAS_RECONFIG, fila);
+                const url = `https://graph.microsoft.com/v1.0/drives/${CONFIG.driveId}/items/${CONFIG.fileId}/workbook/worksheets('${CONFIG.sheetName}')/range(address='${celda}')`;
+                await fetch(url, {
+                    method: "PATCH",
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ values: [[cambio.U / 100]] })
+                });
+            }
+
+            // Guardar V si tiene valor
+            if (cambio.V !== null) {
+                const celda = columnToA1(COLUMNAS.PROYECCION_RECONFIG, fila);
+                const url = `https://graph.microsoft.com/v1.0/drives/${CONFIG.driveId}/items/${CONFIG.fileId}/workbook/worksheets('${CONFIG.sheetName}')/range(address='${celda}')`;
+                await fetch(url, {
+                    method: "PATCH",
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ values: [[cambio.V]] })
+                });
+            }
         }
+
+        const totalFilas = Object.keys(pendingChanges).length;
+        pendingChanges = {};
+        actualizarBadgeGuardar();
 
         btnGuardar.disabled = false;
         btnGuardar.textContent = "Guardar cambios";
-        alert(`${cambios.length} cambio(s) guardado(s). Hacé clic en "Ver datos modificados" para ver el impacto en los resultados.`);
+        alert(`${totalFilas} fila(s) guardada(s). Pasá a Consulta para ver el impacto en los resultados.`);
 
     } catch (err) {
         console.error(err);
         btnGuardar.disabled = false;
-        btnGuardar.textContent = "Guardar cambios";
+        actualizarBadgeGuardar();
         alert("Error al guardar cambios: " + err.message);
     }
 }
@@ -302,7 +354,7 @@ function actualizarCascada(nivel) {
     const subgrupo = document.getElementById("filtro-subgrupo").value;
     const cuenta = document.getElementById("filtro-cuenta").value;
 
-    const datos = modoResultados ? datosBrutosResultados : datosBrutos;
+    const datos = modoConsulta ? datosBrutosConsulta : datosBrutos;
 
     const filtrarDatos = (data) => data.filter(f =>
         (gerencia === "" || f[COLUMNAS.GERENCIA] === gerencia) &&
@@ -372,7 +424,7 @@ function aplicarFiltros() {
     const cuenta = document.getElementById("filtro-cuenta").value;
     const cuentageneral = document.getElementById("filtro-cuentageneral").value;
 
-    const datos = modoResultados ? datosBrutosResultados : datosBrutos;
+    const datos = modoConsulta ? datosBrutosConsulta : datosBrutos;
 
     datosFiltrados = datos.filter(fila => {
         return (
@@ -424,8 +476,9 @@ function renderizarTabla() {
 
     datosFiltrados.forEach((fila, index) => {
         const tr = document.createElement("tr");
+        const filaExcel = fila[COLUMNAS.FILA_EXCEL];
 
-        if (modoResultados) {
+        if (modoConsulta) {
             tr.innerHTML = `
                 <td>${fila[COLUMNAS.GERENCIA] || ""}</td>
                 <td>${fila[COLUMNAS.SECCION] || ""}</td>
@@ -441,6 +494,15 @@ function renderizarTabla() {
                 <td>${formatearUSD(fila[COLUMNAS.PROYECCION_RESULT])}</td>
             `;
         } else {
+            // Recuperar valores pendientes para esta fila si existen
+            const pendiente = pendingChanges[filaExcel] || {};
+            const valorU = pendiente.U !== null && pendiente.U !== undefined
+                ? (pendiente.U * 100).toLocaleString("es-AR", { maximumFractionDigits: 5 })
+                : "";
+            const valorV = pendiente.V !== null && pendiente.V !== undefined
+                ? pendiente.V.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                : "";
+
             tr.innerHTML = `
                 <td>${fila[COLUMNAS.GERENCIA] || ""}</td>
                 <td>${fila[COLUMNAS.SECCION] || ""}</td>
@@ -452,13 +514,29 @@ function renderizarTabla() {
                 <td>${fila[COLUMNAS.CUENTA_GENERAL] || ""}</td>
                 <td>${formatearPorcentaje(fila[COLUMNAS.PROM_PVTAS])}</td>
                 <td>${formatearUSD(fila[COLUMNAS.PROYECCION])}</td>
-                <td><input type="text" class="input-pvtas" data-index="${index}" placeholder="ej: -0,8"></td>
-                <td><input type="text" class="input-usd" data-index="${index}" placeholder="ej: 3000,25"></td>
+                <td><input type="text" class="input-pvtas${pendiente.U !== null && pendiente.U !== undefined ? ' con-cambio' : ''}" data-fila="${filaExcel}" value="${valorU}" placeholder="ej: -0,8"></td>
+                <td><input type="text" class="input-usd${pendiente.V !== null && pendiente.V !== undefined ? ' con-cambio' : ''}" data-fila="${filaExcel}" value="${valorV}" placeholder="ej: 3000,25"></td>
             `;
         }
 
         tbody.appendChild(tr);
     });
+
+    // Eventos de edición: registrar cambio al salir del input (blur)
+    if (!modoConsulta) {
+        tbody.querySelectorAll(".input-pvtas").forEach(input => {
+            input.addEventListener("blur", () => {
+                registrarCambio(parseInt(input.dataset.fila), "U", input.value);
+                input.classList.toggle("con-cambio", input.value.trim() !== "");
+            });
+        });
+        tbody.querySelectorAll(".input-usd").forEach(input => {
+            input.addEventListener("blur", () => {
+                registrarCambio(parseInt(input.dataset.fila), "V", input.value);
+                input.classList.toggle("con-cambio", input.value.trim() !== "");
+            });
+        });
+    }
 }
 
 // =============================================
