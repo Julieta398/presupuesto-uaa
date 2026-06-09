@@ -216,3 +216,71 @@ body {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+#contenido {
+    padding: 20px 24px 40px;
+    overflow-x: auto;
+}
+
+#mensaje-inicial {
+    color: #aaa;
+    text-align: center;
+    margin-top: 60px;
+    font-size: 13px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+thead tr {
+    background: #0f62ac;
+}
+
+thead th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: white;
+    white-space: nowrap;
+}
+
+thead th:first-child {
+    border-left: 4px solid #ed3237;
+}
+
+tbody tr:nth-child(even) {
+    background: #f7f9fc;
+}
+
+tbody tr:hover {
+    background: #e8f0fb;
+}
+
+tbody td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+input[type="text"] {
+    width: 100px;
+    padding: 4px 7px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: #0f62ac;
+}
