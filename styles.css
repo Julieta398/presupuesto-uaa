@@ -206,7 +206,7 @@ body {
     border-color: #0f62ac;
 }
 
-.modo-btn.activo-resultados {
+.modo-btn.activo-consulta {
     background: #ed3237;
     color: white;
     border-color: #ed3237;
@@ -283,4 +283,9 @@ input[type="text"] {
 input[type="text"]:focus {
     outline: none;
     border-color: #0f62ac;
+}
+
+input.con-cambio {
+    border-color: #ed3237;
+    background: #fff5f5;
 }
