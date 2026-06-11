@@ -393,8 +393,8 @@ function poblarSelect(idSelect, indiceColumna, datos) {
     select.innerHTML = '<option value="">-- Todos --</option>';
 
     const valores = [...new Set(datos
-        .map(fila => fila[indiceColumna])
-        .filter(v => v !== null && v !== undefined && v !== "")
+    .map(fila => String(fila[indiceColumna] ?? "").trim())
+    .filter(v => v !== "")
     )].sort();
 
     valores.forEach(valor => {
@@ -437,7 +437,7 @@ function aplicarFiltros() {
             (grupo === "" || fila[COLUMNAS.GRUPO] === grupo) &&
             (subgrupo === "" || fila[COLUMNAS.SUBGRUPO] === subgrupo) &&
             (cuenta === "" || fila[COLUMNAS.CUENTA] === cuenta) &&
-            (cuentageneral === "" || fila[COLUMNAS.CUENTA_GENERAL] === cuentageneral)
+            (cuentageneral === "" || String(fila[COLUMNAS.CUENTA_GENERAL]).trim() === cuentageneral)
         );
     });
 
