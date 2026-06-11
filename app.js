@@ -478,6 +478,9 @@ function renderizarTabla() {
 
     datosFiltrados.forEach((fila, index) => {
         const tr = document.createElement("tr");
+        if (String(fila[COLUMNAS.CUENTA_GENERAL]).trim() === "4990") {
+            tr.classList.add("fila-resaltada");
+        }
         const filaExcel = fila[COLUMNAS.FILA_EXCEL];
 
         if (modoConsulta) {

@@ -308,3 +308,13 @@ input.con-cambio {
     border-color: #ed3237;
     background: #fff5f5;
 }
+
+tbody tr.fila-resaltada td {
+    background: #fff3cd;
+    color: #7a5900;
+    font-weight: 600;
+}
+
+tbody tr.fila-resaltada:hover td {
+    background: #ffe89a;
+}
