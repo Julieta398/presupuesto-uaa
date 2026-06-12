@@ -4,8 +4,8 @@
 const CONFIG = {
     clientId: "943db2c4-87f7-4e93-a1b4-dce615cc3e58",
     tenantId: "1bf53cb5-3053-4955-9cd4-cfbc764573a1",
-    driveId: "PENDIENTE",
-    fileId: "PENDIENTE",
+    driveId: "b!GL31FErlQ0uVMuzvkVCznVkAsglIl-tKox6b60imcsGlBoPYm3FQRJFqkmUCxMc3",
+    fileId: "01NNIQRLH6GUPC6TVMY5C2FLGR5CYE2XW6",
     sheetName: "PRODUCTOS_AGRÍCOLAS"
 };
 
