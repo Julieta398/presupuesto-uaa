@@ -595,7 +595,7 @@ function mostrarToast(mensaje) {
 }
 
 async function cargarPermisos() {
-    const url = `https://graph.microsoft.com/v1.0/drives/${CONFIG.driveId}/items/${CONFIG.fileId}/workbook/worksheets('PERMISOS')/usedRange`;
+    const url = `https://graph.microsoft.com/v1.0/drives/${CONFIG.driveId}/items/${CONFIG.fileId}/workbook/worksheets('PERMISOS')/usedRange?$t=${Date.now()}`;
     const response = await fetch(url, {
         headers: { Authorization: `Bearer ${accessToken}` }
     });
