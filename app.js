@@ -198,7 +198,7 @@ async function toggleModo() {
         btnConsulta.disabled = true;
         btnConsulta.textContent = "Cargando...";
 
-        await cargarDatosDesdeGraph(true);
+        await cargarConsultaOptimizada();
 
         modoConsulta = true;
         btnEdicion.classList.remove("activo");
@@ -616,4 +616,38 @@ async function cargarPermisos() {
 function aplicarFiltroPermisos(datos) {
     if (permisosUsuario.length === 0) return datos; // ve todo
     return datos.filter(f => permisosUsuario.includes(f[COLUMNAS.GERENCIA]));
+}
+
+async function cargarConsultaOptimizada() {
+    // Lee solo columnas W y X (índices 22 y 23) más la columna de fila
+    const colW = "W";
+    const colX = "X";
+
+    // Obtener cuántas filas tiene el archivo usando el rango usado
+    const urlRango = `https://graph.microsoft.com/v1.0/drives/${CONFIG.driveId}/items/${CONFIG.fileId}/workbook/worksheets('${CONFIG.sheetName}')/usedRange?$select=rowCount`;
+    const respRango = await fetch(urlRango, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (!respRango.ok) throw new Error("Error al obtener rango.");
+    const dataRango = await respRango.json();
+    const totalFilas = dataRango.rowCount; // incluye encabezado
+
+    // Leer solo columnas W y X
+    const urlWX = `https://graph.microsoft.com/v1.0/drives/${CONFIG.driveId}/items/${CONFIG.fileId}/workbook/worksheets('${CONFIG.sheetName}')/range(address='${colW}1:${colX}${totalFilas}')/values`;
+    const respWX = await fetch(urlWX, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (!respWX.ok) throw new Error("Error al leer columnas W y X.");
+    const dataWX = await respWX.json();
+    const valoresWX = dataWX.value.slice(1); // saltar encabezado
+
+    // Mergear con datosBrutos por índice de fila
+    datosBrutosConsulta = datosBrutos.map((fila, index) => {
+        const filaCopia = [...fila];
+        if (valoresWX[index]) {
+            filaCopia[COLUMNAS.PROM_PVTAS_RESULT] = valoresWX[index][0];
+            filaCopia[COLUMNAS.PROYECCION_RESULT] = valoresWX[index][1];
+        }
+        return filaCopia;
+    });
 }
