@@ -147,6 +147,7 @@ async function obtenerToken() {
 async function cargarDatosDesdeGraph(paraConsulta = false) {
     if (!paraConsulta) {
         document.getElementById("mensaje-inicial").textContent = "Cargando datos...";
+        await cargarPermisos();
     }
 
     try {
