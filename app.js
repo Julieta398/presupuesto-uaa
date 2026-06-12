@@ -2,10 +2,10 @@
 // CONFIGURACION GRAPH API
 // =============================================
 const CONFIG = {
-    clientId: "8e219d60-b3b3-4bee-940f-cf1e303b44e2",
-    tenantId: "cf6d7bb3-e5d3-4a5b-ad2a-c20744ff225a",
-    driveId: "b!6e8IVbC020eZ80xzh-guvFGEGZPPitlAtzLHyskTtba5ocGAk2jbTJqLGUIDyi3c",
-    fileId: "013GIXEMTDO7AQ3XPDANGZHNF77YA4RJPO",
+    clientId: "943db2c4-87f7-4e93-a1b4-dce615cc3e58",
+    tenantId: "1bf53cb5-3053-4955-9cd4-cfbc764573a1",
+    driveId: "PENDIENTE",
+    fileId: "PENDIENTE",
     sheetName: "PRODUCTOS_AGRÍCOLAS"
 };
 
