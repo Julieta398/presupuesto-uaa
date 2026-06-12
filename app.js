@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const cuentas = msalInstance.getAllAccounts();
     if (cuentas.length > 0) {
         await obtenerToken();
-        cargarDatosDesdeGraph();
+        await cargarDatosDesdeGraph();
     }
 });
 
