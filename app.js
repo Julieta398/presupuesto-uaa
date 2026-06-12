@@ -46,6 +46,7 @@ let datosFiltrados = [];
 let msalInstance = null;
 let accessToken = null;
 let modoConsulta = false;
+let permisosUsuario = [];
 
 // pendingChanges: { [filaExcel]: { U: number|null, V: number|null } }
 let pendingChanges = {};
@@ -134,6 +135,7 @@ async function obtenerToken() {
         document.getElementById("btn-login").style.display = "none";
         document.getElementById("usuario").textContent = cuentas[0].username;
         document.getElementById("info-usuario").style.display = "block";
+        await cargarPermisos();
     } catch (err) {
         await msalInstance.acquireTokenRedirect(loginRequest);
     }
@@ -166,9 +168,9 @@ async function cargarDatosDesdeGraph(paraConsulta = false) {
         });
 
         if (paraConsulta) {
-            datosBrutosConsulta = datos;
+            datosBrutosConsulta = aplicarFiltroPermisos(datos);
         } else {
-            datosBrutos = datos;
+            datosBrutos = aplicarFiltroPermisos(datos);
             if (datosBrutos.length === 0 || document.getElementById("filtro-gerencia").options.length <= 1) {
                 inicializarFiltros();
             }
@@ -589,4 +591,28 @@ function mostrarToast(mensaje) {
         toast.style.opacity = "0";
         setTimeout(() => toast.remove(), 300);
     }, 3500);
+}
+
+async function cargarPermisos() {
+    const url = `https://graph.microsoft.com/v1.0/drives/${CONFIG.driveId}/items/${CONFIG.fileId}/workbook/worksheets('PERMISOS')/usedRange`;
+    const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (!response.ok) return; // si no existe la hoja, no filtra nada
+
+    const data = await response.json();
+    const filas = data.values.slice(1); // saltar encabezado
+    const emailUsuario = msalInstance.getAllAccounts()[0].username.toLowerCase();
+
+    const gerenciasPermitidas = filas
+        .filter(f => f[0] && f[0].toString().toLowerCase() === emailUsuario)
+        .map(f => f[1]);
+
+    // si no hay filas para ese usuario, ve todo
+    permisosUsuario = gerenciasPermitidas;
+}
+
+function aplicarFiltroPermisos(datos) {
+    if (permisosUsuario.length === 0) return datos; // ve todo
+    return datos.filter(f => permisosUsuario.includes(f[COLUMNAS.GERENCIA]));
 }
