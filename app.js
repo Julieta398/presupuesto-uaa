@@ -633,13 +633,13 @@ async function cargarConsultaOptimizada() {
     const totalFilas = dataRango.rowCount; // incluye encabezado
 
     // Leer solo columnas W y X
-    const urlWX = `https://graph.microsoft.com/v1.0/drives/${CONFIG.driveId}/items/${CONFIG.fileId}/workbook/worksheets('${CONFIG.sheetName}')/range(address='${colW}1:${colX}${totalFilas}')/values`;
+    const urlWX = `https://graph.microsoft.com/v1.0/drives/${CONFIG.driveId}/items/${CONFIG.fileId}/workbook/worksheets('${CONFIG.sheetName}')/range(address='${colW}1:${colX}${totalFilas}')`;
     const respWX = await fetch(urlWX, {
         headers: { Authorization: `Bearer ${accessToken}` }
     });
     if (!respWX.ok) throw new Error("Error al leer columnas W y X.");
     const dataWX = await respWX.json();
-    const valoresWX = dataWX.value.slice(1); // saltar encabezado
+    const valoresWX = dataWX.values.slice(1); // saltar encabezado
 
     // Mergear con datosBrutos por índice de fila
     datosBrutosConsulta = datosBrutos.map((fila, index) => {
