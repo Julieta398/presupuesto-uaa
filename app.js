@@ -314,7 +314,7 @@ async function guardarCambios() {
 
         btnGuardar.disabled = false;
         btnGuardar.textContent = "Guardar cambios";
-        alert(`${totalFilas} fila(s) guardada(s). Pasá a Consulta para ver el impacto en los resultados.`);
+        mostrarToast(`${totalFilas} fila(s) guardada(s). Pasá a Consulta para ver el impacto en los resultados.`);
 
     } catch (err) {
         console.error(err);
@@ -563,4 +563,30 @@ function parsearNumero(texto) {
     const num = parseFloat(texto);
     if (isNaN(num)) return null;
     return num;
+}
+
+function mostrarToast(mensaje) {
+    const toast = document.createElement("div");
+    toast.textContent = mensaje;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #0f62ac;
+        color: white;
+        padding: 14px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 9999;
+        opacity: 0;
+        transition: opacity 0.3s;
+    `;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.style.opacity = "1");
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
 }
